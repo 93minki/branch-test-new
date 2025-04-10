@@ -1,0 +1,47 @@
+name: QA Deploy (Auto)
+
+on:
+  pull_request:
+    branches:
+      - qa
+    types:
+      - closed
+
+run-name: QA Deploy (Auto)
+
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout QA branch
+        uses: actions/checkout@v4
+        with:
+          ref: qa
+          fetch-depth: 0
+
+      - name: Read QA version from version.json
+        id: version
+        run: |
+          VERSION=$(jq -r '.qa' version.json)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "📌 QA version from file: $VERSION"
+
+      - name: Check if tag already exists
+        run: |
+          TAG="qa-v${{ steps.version.outputs.version }}"
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "⚠️ Tag $TAG already exists. Skipping."
+            exit 0
+          fi
+
+      - name: Create Git Tag (qa-vX.X.X)
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git tag qa-v${{ steps.version.outputs.version }}
+          git push origin qa-v${{ steps.version.outputs.version }}
