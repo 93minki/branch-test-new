@@ -14,10 +14,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout source branch
+      - name: Checkout PR source branch (main)
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.head_ref }}
+          ref: ${{ github.head_ref }}  # PR의 source 브랜치(main)
 
       - name: Set up Git
         run: |
@@ -27,7 +27,7 @@ jobs:
       - name: Calculate next QA version
         id: version
         run: |
-          CURRENT=$(jq -r '.qa' version.json | sed 's/qa-v//')
+          CURRENT=$(jq -r '.qa' version.json)
           MAJOR=$(echo "$CURRENT" | cut -d. -f1)
           MINOR=$(echo "$CURRENT" | cut -d. -f2)
           PATCH=$(echo "$CURRENT" | cut -d. -f3)
@@ -35,7 +35,7 @@ jobs:
           echo "new_version=$NEW_VERSION" >> "$GITHUB_OUTPUT"
           jq --arg v "$NEW_VERSION" '.qa = $v' version.json > tmp && mv tmp version.json
 
-      - name: Commit and push version update
+      - name: Commit and push version update into PR source branch
         env:
           TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
