@@ -17,7 +17,7 @@ jobs:
       - name: Checkout PR source branch (main)
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.head_ref }}  # PR의 source 브랜치(main)
+          ref: ${{ github.head_ref }} # PR의 source 브랜치(main)
 
       - name: Set up Git
         run: |
