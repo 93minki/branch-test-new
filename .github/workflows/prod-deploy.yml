@@ -30,9 +30,8 @@ jobs:
           PROD_VERSION=$(jq -r '.prod' version.json)
           QA_VERSION=$(jq -r '.qa' version.json)
 
-          FULL_TAG="v${PROD_VERSION}-qa-v${QA_VERSION}"
-          echo "tag=$FULL_TAG" >> $GITHUB_OUTPUT
-          echo "📌 Tag to create: $FULL_TAG"
+          TAG="v${PROD_VERSION}-qa-v${QA_VERSION}"
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
 
       - name: Check if tag already exists
         run: |
