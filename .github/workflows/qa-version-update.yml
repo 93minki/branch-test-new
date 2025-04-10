@@ -31,7 +31,7 @@ jobs:
           MAJOR=$(echo "$CURRENT" | cut -d. -f1)
           MINOR=$(echo "$CURRENT" | cut -d. -f2)
           PATCH=$(echo "$CURRENT" | cut -d. -f3)
-          NEW_VERSION="qa-v$MAJOR.$((MINOR + 1)).0"
+          NEW_VERSION="$MAJOR.$((MINOR + 1)).0"
           echo "new_version=$NEW_VERSION" >> "$GITHUB_OUTPUT"
           jq --arg v "$NEW_VERSION" '.qa = $v' version.json > tmp && mv tmp version.json
 
