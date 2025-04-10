@@ -27,12 +27,14 @@ jobs:
       - name: Calculate next PROD version
         id: version
         run: |
-          QA_VERSION=$(jq -r '.qa' version.json | sed 's/qa-v//')
+          # QA 버전 (prefix 없음)
+          QA_VERSION=$(jq -r '.qa' version.json)
 
-          PROD_RAW=$(jq -r '.prod' version.json | sed -E 's/v([0-9]+\.[0-9]+\.[0-9]+).*/\1/')
-          MAJOR=$(echo "$PROD_RAW" | cut -d. -f1)
-          MINOR=$(echo "$PROD_RAW" | cut -d. -f2)
-          PATCH=$(echo "$PROD_RAW" | cut -d. -f3)
+          # PROD 버전 (prefix 없음)
+          PROD_VERSION=$(jq -r '.prod' version.json)
+          MAJOR=$(echo "$PROD_VERSION" | cut -d. -f1)
+          MINOR=$(echo "$PROD_VERSION" | cut -d. -f2)
+          PATCH=$(echo "$PROD_VERSION" | cut -d. -f3)
 
           HEAD_BRANCH="${{ github.head_ref }}"
           if [[ "$HEAD_BRANCH" == "qa" ]]; then
@@ -41,14 +43,17 @@ jobs:
           elif [[ "$HEAD_BRANCH" =~ ^hotfix/.*$ ]]; then
             PATCH=$((PATCH + 1))
           else
-            echo "예상하지 못한 브랜치명: $HEAD_BRANCH"
+            echo "❌ 예상하지 못한 브랜치명: $HEAD_BRANCH"
             exit 1
           fi
 
-          NEW_VERSION="v$MAJOR.$MINOR.$PATCH-qa_$QA_VERSION"
-          echo "new_version=$NEW_VERSION" >> "$GITHUB_OUTPUT"
+          PROD_NEW_VERSION="$MAJOR.$MINOR.$PATCH"
+          FULL_TAG="v$PROD_NEW_VERSION-qa-v$QA_VERSION"
 
-          jq --arg v "$NEW_VERSION" '.prod = $v' version.json > tmp && mv tmp version.json
+          echo "new_version=$PROD_NEW_VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=$FULL_TAG" >> "$GITHUB_OUTPUT"
+
+          jq --arg v "$PROD_NEW_VERSION" '.prod = $v' version.json > tmp && mv tmp version.json
 
       - name: Commit and push version update
         env:
