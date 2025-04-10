@@ -1,0 +1,50 @@
+name: PROD Deploy (Auto)
+
+on:
+  pull_request:
+    branches:
+      - prod
+    types:
+      - closed
+
+run-name: PROD Deploy (Auto)
+
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout PROD branch
+        uses: actions/checkout@v4
+        with:
+          ref: prod
+          fetch-depth: 0
+
+      - name: Read version from version.json
+        id: version
+        run: |
+          PROD_VERSION=$(jq -r '.prod' version.json)
+          QA_VERSION=$(jq -r '.qa' version.json)
+
+          FULL_TAG="v${PROD_VERSION}-qa-v${QA_VERSION}"
+          echo "tag=$FULL_TAG" >> $GITHUB_OUTPUT
+          echo "📌 Tag to create: $FULL_TAG"
+
+      - name: Check if tag already exists
+        run: |
+          TAG=${{ steps.version.outputs.tag }}
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "⚠️ 태그 $TAG 이미 존재. 스킵합니다."
+            exit 0
+          fi
+
+      - name: Create Git Tag (vX.X.X-qa-vX.X.X)
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git tag ${{ steps.version.outputs.tag }}
+          git push origin ${{ steps.version.outputs.tag }}
